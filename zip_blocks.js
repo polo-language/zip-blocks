@@ -10,34 +10,46 @@ var fs = require('fs');
 var path = require('path');
 var files = {};
 var blocks = [];
-var blockSizeUnit = 1000000; // million/MB
-var compressionRatio = 1; // built for files with very low compression ratio
+var BLOCK_SIZE_UNIT = 1000000; // million/MB
+var COMPRESSION_RATIO = 1; // built for files with very low compression ratio
 
-// parse args:
-var pathToFiles = process.argv[2];
-var outputDir = process.argv[3];
-if (!fs.existsSync(outputDir) || !fs.statSync(outputDir).isDirectory()) {
-  console.warn('"' + outputDir + '" is not a directory, using "' + __dirname + '" instead.');
-  outputDir = __dirname;
-}
-var blockSize = 20; // default block size in millions of bytes
-if (process.argv.length > 4) {
-  var inputBlockSize = parseInt(process.argv[4], 10);
-  if (1 <= inputBlockSize  && inputBlockSize <= 100) {
-    blockSize = inputBlockSize;
-  } else {
-    console.warn('Approximate block size must be between 1 and 100 MB inclusive. Using default of 20 MB instead.');
+var args = (function () {
+  var _pathToFiles = process.argv[2],
+      _outputDir = process.argv[3],
+      _blockSize = 20, // default block size in millions of bytes
+      _logFileName;
+
+  if (!fs.existsSync(_outputDir) || !fs.statSync(_outputDir).isDirectory()) {
+    console.warn('"' + _outputDir + '" is not a directory, using "' + __dirname + '" instead.');
+    _outputDir = __dirname;
   }
-}
-var logFileName = path.join(outputDir, getDateTimeDashesOnly() + '.log');
-function writeToLog(text) {
-  fs.appendFile(logFileName, text + '\n');
+  _logFileName = path.join(_outputDir, getDateTimeDashesOnly() + '.log');
+
+  if (process.argv.length > 4) {
+    var inputBlockSize = parseInt(process.argv[4], 10);
+    if (1 <= inputBlockSize  && inputBlockSize <= 100)
+      _blockSize = inputBlockSize;
+    else
+      console.warn('Approximate block size must be an integer between 1 and 100 MB, inclusive. Using default of 20 MB instead.');
+  }
+
+  return {
+    get pathToFiles () { return _pathToFiles; },
+    get outputDir () { return _outputDir; },
+    get blockSize () { return _blockSize; },
+    get logFileName () { return _logFileName; },
+  };
+}());
+
+
+function writeLineToLog(text) {
+  fs.appendFile(args.logFileName, text + '\n');
 }
 
 // sort files into blocks by size:
-fs.readdir(pathToFiles, function (err, listing) {
+fs.readdir(args.pathToFiles, function (err, listing) {
   for (var i = 0; i < listing.length; ++i) {
-    var fullPath = path.join(pathToFiles, listing[i]);
+    var fullPath = path.join(args.pathToFiles, listing[i]);
     var stat = fs.statSync(fullPath);
     if (stat.isFile()) {
       files[fullPath] = stat.size;
@@ -49,12 +61,12 @@ fs.readdir(pathToFiles, function (err, listing) {
 
 function getBlocks() {
   var total = 0;
-  var max = blockSize * blockSizeUnit * compressionRatio;
+  var max = args.blockSize * BLOCK_SIZE_UNIT * COMPRESSION_RATIO;
   var blockNum = 0;
   blocks[blockNum] = [];
   for (var key in files) {
     if (files[key] > max) {
-      writeToLog(key + ' is too big for any block - file skipped.');
+      writeLineToLog(key + ' is too big for any block - file skipped.');
       continue;
     }
     total += files[key];
@@ -75,11 +87,11 @@ function doZip() {
       try {
         zip.addLocalFile(blocks[zipNum][i]);
       } catch (err) {
-        writeToLog('Error zipping ' + blocks[i]);
+        writeLineToLog('Error zipping "' + blocks[i] + '".');
         continue;
       }
     }
-    zip.writeZip(path.join(outputDir, (zipNum + 1).toString() + '.zip'));
+    zip.writeZip(path.join(args.outputDir, (zipNum + 1).toString() + '.zip'));
   }
 }
 
