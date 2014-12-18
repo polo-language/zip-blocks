@@ -91,10 +91,8 @@ function doZip() {
 
     for (var i = 0; i < blocks[zipNum].length; ++i) {
       zip.append(fs.createReadStream(blocks[zipNum][i]), { name: path.basename(blocks[zipNum][i]) });
-      //console.log(path.basename(blocks[zipNum][i]));
     }
     zip.finalize();
-
   }
 }
 
