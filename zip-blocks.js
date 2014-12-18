@@ -81,21 +81,20 @@ function getBlocks() {
 }
 
 function doZip() {
-  var AdmZip = require('adm-zip');
+  var archiver = require('archiver');
   for (var zipNum = 0; zipNum < blocks.length; ++zipNum) {
-    var zip = new AdmZip();
-    for (var i = 0; i < blocks[zipNum].length; ++i) {
-      try {
-        zip.addLocalFile(blocks[zipNum][i]);
-      } catch (err) {
-        writeLineToLog('Error zipping "' + blocks[i] + '".');
-        continue;
-      }
-    }
     var fileName = path.join(args.outputDir, (zipNum + 1).toString() + '.zip');
-    zip.writeZip(fileName, function (err) {
-      if (err) { writeLineToLog('Error writing zip to disk: "' + fileName + '".')}
-    });
+    var outFile = fs.createWriteStream(fileName);
+    var zip = archiver('zip');
+    zip.on('error', function (err) { writeLineToLog(err); });
+    zip.pipe(outFile);
+
+    for (var i = 0; i < blocks[zipNum].length; ++i) {
+      zip.append(fs.createReadStream(blocks[zipNum][i], { name: path.basename(blocks[zipNum][i]).toString() }))
+      //console.log(path.basename(blocks[zipNum][i]));
+    }
+    zip.finalize();
+
   }
 }
 
