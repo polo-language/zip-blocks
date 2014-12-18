@@ -27,10 +27,12 @@ var args = (function () {
 
   if (process.argv.length > 4) {
     var inputBlockSize = parseInt(process.argv[4], 10);
-    if (1 <= inputBlockSize  && inputBlockSize <= 100)
+    if (1 <= inputBlockSize  && inputBlockSize <= 100) {
       _blockSize = inputBlockSize;
-    else
+    }
+    else {
       console.warn('Approximate block size must be an integer between 1 and 100 MB, inclusive. Using default of 20 MB instead.');
+    }
   }
 
   return {
@@ -40,7 +42,6 @@ var args = (function () {
     get logFileName () { return _logFileName; },
   };
 }());
-
 
 function writeLineToLog(text) {
   fs.appendFile(args.logFileName, text + '\n');
@@ -91,7 +92,10 @@ function doZip() {
         continue;
       }
     }
-    zip.writeZip(path.join(args.outputDir, (zipNum + 1).toString() + '.zip'));
+    var fileName = path.join(args.outputDir, (zipNum + 1).toString() + '.zip');
+    zip.writeZip(fileName, function (err) {
+      if (err) { writeLineToLog('Error writing zip to disk: "' + fileName + '".')}
+    });
   }
 }
 
