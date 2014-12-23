@@ -1,0 +1,7 @@
+{
+  "name": "zip-blocks",
+  "version": "0.0.2",
+  "dependencies": {
+    "archiver": "^0.13.0"
+  }
+}
