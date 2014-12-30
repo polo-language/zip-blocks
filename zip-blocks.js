@@ -10,7 +10,19 @@ function ZipBlocks() {
   this._files = {};
   this._blocks = [];
   this._BLOCK_SIZE_UNIT = 1000000; // = 1 million = 1 MB
-  this._COMPRESSION_RATIO = 1; // built for files with very low compression ratio
+  this._COMPRESSION_RATIO = 1; // built for files with very high compression ratio
+
+  // TODO: var onHandlers = ['error'];
+
+  this._errorCallback = function (error) {
+    throw new Error(error);
+  };
+
+  this.on = function (type, callback) {
+    if (type === 'error') {
+      errorCallback = callback;
+    }
+  };
 
 };
 
@@ -20,23 +32,21 @@ ZipBlocks.prototype.zipDirectories = {};
 ZipBlocks.prototype.zipFilesInDir = function (inputDir, outputDir, blockSize) {
   var usageString = 'Usage: node zip_blocks.js path_to_files output_dir [approx_block_size_in_MB]';
   if (arguments.length < 1 || 3 < arguments.length) {
-    throw new Error(usageString);
+    this._errorCallback(usageString);
   }
 
-  // test if inputDir is a real path?
-
-  if (outputDir === undefined || !fs.existsSync(outputDir) || !fs.statSync(outputDir).isDirectory()) {
+  if (outputDir === undefined || !fs.existsSync(outputDir)
+                              || !fs.statSync(outputDir).isDirectory()) {
     //console.warn('"' + outputDir + '" is not a directory, using input directory instead.');
     outputDir = inputDir;
   }
+  
   
   // replace with on('error') listener:
   /*var _logFileName = path.join(outputDir, getDateTimeDashesOnly() + '.log');
   function writeLineToLog(text) {
     fs.appendFile(_logFileName, text + '\n');
   }*/
-
-
 };
 
 function getDateTimeDashesOnly() {
