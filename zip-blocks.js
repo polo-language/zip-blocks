@@ -1,5 +1,3 @@
-'use strict';
-
 var Archiver = require('archiver');
 var fs = require('fs');
 var path = require('path');
@@ -7,35 +5,44 @@ var path = require('path');
 module.exports = ZipBlocks;
 
 function ZipBlocks() {
-  //this._files = {};
-  //this._blocks = [];
+  'use strict';
   this._BLOCK_SIZE_UNIT = 1000000; // = 1 million = 1 MB
-  this._COMPRESSION_RATIO = 1; // built for files with very high compression ratio
+  this._compressionRatio = 1; // built for files with very high compression ratio
 
-  // TODO: var onHandlers = ['error'];
-
-  this._errorCallback = function (error) {
+  this._error = function (error) {
     throw new Error(error);
   };
 
   this.on = function (type, callback) {
     if (type === 'error') {
-      this._errorCallback = callback;
+      this._error = callback;
+    } else {
+      throw 'Handler of type \"' + type + '\" not recognized.';
     }
   };
 
+  this.setCompressionRatio = function(ratio) {
+    if (ratio < 0.01 || 1 < ratio) {
+      this._error('Compression ratio must be between 0.01 and 1, inclusive. Using 1.');
+      return;
+    }
+    this._compressionRatio = ratio;
+  };
 }
 
 
 
 ZipBlocks.prototype.zipDirectories = {};
 ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir /*, blockSize*/) {
+  'use strict';
   var usageString = 'Usage: node zip_blocks.js path_to_files output_dir [approx_block_size_in_MB]',
       files = {},
-      blocks = [];
+      //blocks = [],
+      filesReady = 0,
+      zipError = this._error;
 
   if (arguments.length < 1 || 3 < arguments.length) {
-    this._errorCallback(usageString);
+    zipError(usageString);
   }
 
   if (outputDir === undefined || !fs.existsSync(outputDir)
@@ -46,19 +53,33 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir /*, blockSize
   
   fs.readdir(sourceDir, function (err, listing) {
     if (err) {
-      this._errorCallback(err);
+      zipError(err);
       return;
     }
     for (var i = 0; i < listing.length; ++i) {
       var fullPath = path.join(sourceDir, listing[i]);
-      var stat = fs.statSync(fullPath);
-      if (stat.isFile()) {
-        files[fullPath] = stat.size;
+      fs.stat(fullPath, fsStatCallback);
+    }
+    
+    function fsStatCallback(err, stats) {
+      ++filesReady; // increments on error as well so zipping proceeds
+      if (err) {
+        zipError(err);
+        return;
+      }
+      if (stats.isFile()) {
+        files[fullPath] = stats.size;
+      }
+      if (filesReady === listing.length) {
+        getBlocks();
+        doZip();
       }
     }
-    //getBlocks();
-    //doZip();
   });
 
-  //
+
+  function getBlocks() {
+    console.log('getBlocks called.');
+  }
+  function doZip() {}
 };
