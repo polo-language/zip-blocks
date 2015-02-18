@@ -83,7 +83,7 @@ function getBlocks() {
 function doZip() {
   var archiver = require('archiver');
   for (var zipNum = 0; zipNum < blocks.length; ++zipNum) {
-    var fileName = path.join(args.outputDir, (zipNum + 1).toString() + '.zip');
+    var fileName = path.join(args.outputDir, path.basename(args.pathToFiles) + '_' + (zipNum + 1).toString() + '.zip');
     var outFile = fs.createWriteStream(fileName);
     var zip = archiver('zip');
     zip.on('error', function (err) { writeLineToLog(err); });
