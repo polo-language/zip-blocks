@@ -1,6 +1,16 @@
 {
   "name": "zip-blocks",
   "version": "0.0.2",
+  "author": {
+    "name": "Angelo Polo",
+    "email": "polo.language@gmail.com"
+  },
+  "main": "zip-blocks",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "TODO"
+  },
   "dependencies": {
     "archiver": "^0.13.0"
   },

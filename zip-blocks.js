@@ -1,4 +1,3 @@
-var Archiver = require('archiver');
 var fs = require('fs');
 var path = require('path');
 
@@ -7,6 +6,7 @@ module.exports = ZipBlocks;
 function ZipBlocks() {
   'use strict';
   this._BLOCK_SIZE_UNIT = 1000000; // = 1 million = 1 MB
+  this._DEFAULT_BLOCK_SIZE = 20;  // = 20 MB for unit of 1 MB
   this._compressionRatio = 1; // built for files with very high compression ratio
 
   this._error = function (error) {
@@ -30,58 +30,65 @@ function ZipBlocks() {
   };
 }
 
-ZipBlocks.prototype.zipDirectories = {};
-ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir /*, blockSize*/) {
+// TODO: ZipBlocks.prototype.zipDirectories = {};
+
+// zip each file in a given directory in it's own zip file
+// TODO: ZipBlocks.prototype.zipEachFileInDir = funtion (sourceDir, outputDir) {};
+
+ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
   'use strict';
-  var usageString = 'Usage: node zip_blocks.js path_to_files output_dir [approx_block_size_in_MB]'
+  var usageString = 'Usage: zipFilesInDir(sourceDir, [outputDir], [blockSize]).'
     , filesReady = 0
     , zipError = this._error;
 
   if (arguments.length < 1 || 3 < arguments.length) {
     zipError(usageString);
+    return;
   }
 
-  if (outputDir === undefined || !fs.existsSync(outputDir)
-                              || !fs.statSync(outputDir).isDirectory()) {
-    outputDir = sourceDir;
-    //console.warn('"' + outputDir + '" is not a directory, using input directory instead.');
-  }
+  blockSize = blockSize || this._DEFAULT_BLOCK_SIZE;
+
+  fs.exists(outputDir, function (exists) {
+    if (!exists) outputDir = sourceDir;
+    getListingAndZip();
+  });
   
-  fs.readdir(sourceDir, function (err, listing) {
-    var files = {}
-      , fullPath;
+  function getListingAndZip() {
+    fs.readdir(sourceDir, function (err, listing) {
+      var files = {}
+        , fullPath;
 
-    if (err) {
-      zipError(err);
-      return;
-    }
-    for (var i = 0; i < listing.length; ++i) {
-      // TODO: check out usage of fullPath...
-      fullPath = path.join(sourceDir, listing[i]);
-      fs.stat(fullPath, fsStatCallback);
-    }
-    
-    function fsStatCallback(err, stats) {
-      ++filesReady; // increments on error too, so zipping proceeds if no throw
       if (err) {
         zipError(err);
         return;
       }
-      if (stats.isFile()) {
-        files[fullPath] = stats.size;
+      for (var i = 0; i < listing.length; ++i) {
+        // TODO: check out usage of fullPath...
+        fullPath = path.join(sourceDir, listing[i]);
+        fs.stat(fullPath, fsStatCallback);
       }
-      if (filesReady === listing.length) {
-        doZip(getBlocks(files));
+      
+      function fsStatCallback(err, stats) {
+        ++filesReady; // increments on error too, so zipping proceeds if no throw
+        if (err) {
+          zipError(err);
+          return;
+        }
+        if (stats.isFile()) {
+          files[fullPath] = stats.size;
+        }
+        if (filesReady === listing.length) {
+          doZip(getBlocks(files));
+        }
       }
-    }
-  });
-
+    });
+  }
 
   function getBlocks(files) {
     var blocks = {}
-      , total = 0,
+      , total = 0
       , blockNum = 0
-      , max = args.blockSize * BLOCK_SIZE_UNIT * COMPRESSION_RATIO;
+      , max = blockSize * this._BLOCK_SIZE_UNIT * this._compressionRatio;
 
     blocks[blockNum] = [];
     for (var key in files) {
@@ -96,11 +103,13 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir /*, blockSize
         total = files[key];
       }
       blocks[blockNum].push(key);
+      console.log(blockNum + ': ' + key);
     }
     return blocks;
   }
 
   function doZip(blocks) {
     // TODO
+    console.log('**********************\ndoZip');
   }
 };
