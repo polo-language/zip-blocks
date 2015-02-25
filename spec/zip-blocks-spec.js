@@ -7,14 +7,10 @@ describe('zip-blocks constructor', function() {
     zip = new ZipBlocks();
   });*/
 
-  it('should initialize empty files and blocks', function () {
-    expect(zip._files).toEqual([]);
-    expect(zip._blocks).toEqual({});
-  });
-
   it('should initialize block and compression constants', function () {
     expect(zip._BLOCK_SIZE_UNIT).toEqual(1000000);
-    expect(zip._COMPRESSION_RATIO).toEqual(1);
+    expect(zip._DEFAULT_BLOCK_SIZE).toEqual(20);
+    expect(zip._compressionRatio).toEqual(1);
   });
 
 });
@@ -57,7 +53,7 @@ describe('zip-blocks zipFilesInDir', function() {
 
     // causes error by having too few arguments:
     expect(function () { zip.zipFilesInDir(); }).not.toThrow();
-    expect(zip._errorCallback === obj.logError).toBeTruthy();
+    expect(zip._error === obj.logError).toBeTruthy();
     expect(obj.logError).toHaveBeenCalled();
   });
 
