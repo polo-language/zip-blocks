@@ -10,7 +10,7 @@ function ZipBlocks() {
   this._compressionRatio = 1; // built for files with very high compression ratio
 
   this._error = function (error) {
-    console.err(error); // defualt error handling
+    console.error(error); // defualt error handling
   };
 
   this.on = function (type, callback) {
