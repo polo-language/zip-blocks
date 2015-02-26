@@ -1,3 +1,6 @@
+var inPath = './test_files/in/01'
+  , outPath = './test_files/out';
+
 describe('zip-blocks constructor', function() {
   'use strict';
   var ZipBlocks = require('../zip-blocks');
@@ -28,40 +31,49 @@ describe('zip-blocks zipFilesInDir', function() {
     expect(zip.zipFilesInDir).toEqual(jasmine.any(Function));
   });
 
-  it('should accept 1-3 arguments inclusive', function () {
-    expect(function () { zip.zipFilesInDir(); }).toThrow();
-    expect(function () { zip.zipFilesInDir('1'); }).not.toThrow();
-    expect(function () { zip.zipFilesInDir('1', '2'); }).not.toThrow();
-    expect(function () { zip.zipFilesInDir('1', '2', '3'); }).not.toThrow();
-    expect(function () { zip.zipFilesInDir('1', '2', '3', '4'); }).toThrow();
-    expect(function () { zip.zipFilesInDir('1', '2', '3', '4', '5'); }).toThrow();
-  });
-
   it('should set and call custom callback on error', function () {
-    var obj = {
+    var errorObj = {
       logError: function (msg) {
-        console.log(msg.toString());
+        console.log('Custom error: ' + msg.toString());
       }
     };
-    
-    spyOn(obj, 'logError').andCallThrough();
+    spyOn(errorObj, 'logError').andCallThrough();
+    zip.on('error', errorObj.logError);
 
-    // causes error by having too few arguments:
-    expect(function () { zip.zipFilesInDir(); }).toThrow();
-    
-    zip.on('error', obj.logError);
+    // intentionally cause an error by having too few arguments:
+    zip.zipFilesInDir();
 
-    // causes error by having too few arguments:
-    expect(function () { zip.zipFilesInDir(); }).not.toThrow();
-    expect(zip._error === obj.logError).toBeTruthy();
-    expect(obj.logError).toHaveBeenCalled();
+    expect(zip._error === errorObj.logError).toBeTruthy();
+    expect(errorObj.logError).toHaveBeenCalled();
   });
 
-  /*it('should create a list of files and file sizes', function () {
-    var inputPath = '01_test_input_files';
-    var outputPath = '02_test_output';
+  describe('number of arguments accepted', function () {
+    var errorObj;
 
-    // how to test ...
-  });*/
+    beforeEach(function () {
+      errorObj = {
+        logError: function () { throw new Error(); }
+      };
+      zip.on('error', errorObj.logError);
+    });
 
+    it('should not accept 0 arguments', function () {
+      expect(function () { zip.zipFilesInDir(); }).toThrow();
+    });
+    it('should accept 1 argument', function () {
+      expect(function () { zip.zipFilesInDir('inPath'); }).not.toThrow();
+    });
+    it('should accept 2 arguments', function () {
+      expect(function () { zip.zipFilesInDir('inPath', 'outPath'); }).not.toThrow();
+    });
+    it('should accept 3 arguments', function () {
+      expect(function () { zip.zipFilesInDir('inPath', 'outPath', '3'); }).not.toThrow();
+    });
+    it('should not accept 4 arguments', function () {
+      expect(function () { zip.zipFilesInDir('inPath', 'outPath', '3', '4'); }).toThrow();
+    });
+    it('should not accept 5 arguments', function () {
+      expect(function () { zip.zipFilesInDir('inPath', 'outPath', '3', '4', '5'); }).toThrow();
+    });
+  });
 });
