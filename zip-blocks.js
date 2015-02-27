@@ -1,5 +1,5 @@
-var fs = require('fs');
-var path = require('path');
+var fs = require('fs')
+  , path = require('path');
 
 module.exports = ZipBlocks;
 
@@ -8,6 +8,7 @@ function ZipBlocks() {
   this._BLOCK_SIZE_UNIT = 1000000; // = 1 million
   this._DEFAULT_BLOCK_SIZE = 20;  // = 20 MB for unit of 1 MB
   this._compressionRatio = 1; // built for files with very high compression ratio
+  this._RATIO_ERROR_STRING = 'Compression ratio must be between 0.01 and 1, inclusive. Using 1.';
 
   this._error = function (error) {
     console.error(error); // defualt error handling
@@ -23,17 +24,15 @@ function ZipBlocks() {
 
   this.setCompressionRatio = function(ratio) {
     if (ratio < 0.01 || 1 < ratio) {
-      this._error('Compression ratio must be between 0.01 and 1, inclusive. Using 1.');
+      this._error(this._RATIO_ERROR_STRING);
       return;
     }
     this._compressionRatio = ratio;
   };
 }
 
-// TODO: ZipBlocks.prototype.zipDirectories = {};
-
-// zip each file in a given directory in it's own zip file
 // TODO: ZipBlocks.prototype.zipEachFileInDir = funtion (sourceDir, outputDir) {};
+//       zips each file in a given directory in it's own zip file
 
 ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
   'use strict';
@@ -50,7 +49,7 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
 
   blockSize = blockSize || this._DEFAULT_BLOCK_SIZE;
 
-  fs.exists(outputDir || '', function (exists) { // if outputDir undefined, use empty string
+  fs.exists(outputDir || '', function (exists) { // use empty str if undefined
     if (!exists) outputDir = sourceDir;
     getListingAndZip();
   });
@@ -69,7 +68,7 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
 
       function runStat(path) {
         fs.stat(path, function (err, stats) {
-          ++filesReady; // increments on error too, so zipping proceeds if no throw
+          ++filesReady; // ++ on error too, so zipping proceeds if no throw
           if (err) {
             zipError(err);
             return;
@@ -108,8 +107,27 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
     return blocks;
   }
 
-  function doZip(/*blocks*/) {
-    // TODO
-    console.log('**********************\ndoZip');
+  function doZip(blocks) {
+    var archiver = require('archiver')
+      , zip = archiver('zip')
+      , fileName
+      , outFile
+      , zipNum;
+
+    for (zipNum = 0; zipNum < blocks.length; ++zipNum) {
+      fileName = path.join(outputDir,
+                           path.basename(sourceDir) + '_' +
+                                  (zipNum + 1).toString() +
+                                  '.zip');
+      outFile = fs.createWriteStream(fileName);
+      zip.on('error', zipError);
+      zip.pipe(outFile);
+
+      for (var i = 0; i < blocks[zipNum].length; ++i) {
+        zip.append(fs.createReadStream(blocks[zipNum][i]),
+                   { name: path.basename(blocks[zipNum][i]) });
+      }
+      zip.finalize();
+    }
   }
 };
