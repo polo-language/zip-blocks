@@ -1,6 +1,3 @@
-var fs = require('fs')
-  , path = require('path');
-
 module.exports = ZipBlocks;
 
 function ZipBlocks() {
@@ -31,12 +28,11 @@ function ZipBlocks() {
   };
 }
 
-// TODO: ZipBlocks.prototype.zipEachFileInDir = funtion (sourceDir, outputDir) {};
-//       zips each file in a given directory in it's own zip file
-
 ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
   'use strict';
-  var usageString = 'Usage: zipFilesInDir(sourceDir, [outputDir], [blockSize]).'
+  var fs = require('fs')
+    , path = require('path')
+    , usageString = 'Usage: zipFilesInDir(sourceDir, [outputDir], [blockSize]).'
     , filesReady = 0
     , zipError = this._error
     , blockSizeUnit = this._BLOCK_SIZE_UNIT
@@ -66,15 +62,15 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
         runStat(path.join(sourceDir, listing[i]));
       }
 
-      function runStat(path) {
-        fs.stat(path, function (err, stats) {
+      function runStat(filePath) {
+        fs.stat(filePath, function (err, stats) {
           ++filesReady; // ++ on error too, so zipping proceeds if no throw
           if (err) {
             zipError(err);
             return;
           }
           if (stats.isFile()) {
-            files[path] = stats.size;
+            files[filePath] = stats.size;
           }
           if (filesReady === listing.length) {
             doZip(getBlocks(files));
@@ -85,7 +81,7 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
   }
 
   function getBlocks(files) {
-    var blocks = {}
+    var blocks = []
       , total = 0
       , blockNum = 0
       , max = blockSize * blockSizeUnit * compressionRatio;
@@ -109,17 +105,18 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
 
   function doZip(blocks) {
     var archiver = require('archiver')
-      , zip = archiver('zip')
-      , fileName
+      , zip
+      , zipFileName
       , outFile
       , zipNum;
 
     for (zipNum = 0; zipNum < blocks.length; ++zipNum) {
-      fileName = path.join(outputDir,
-                           path.basename(sourceDir) + '_' +
+      zipFileName = path.join(outputDir,
+                              path.basename(sourceDir) + '_' +
                                   (zipNum + 1).toString() +
                                   '.zip');
-      outFile = fs.createWriteStream(fileName);
+      outFile = fs.createWriteStream(zipFileName);
+      zip = archiver('zip');
       zip.on('error', zipError);
       zip.pipe(outFile);
 
