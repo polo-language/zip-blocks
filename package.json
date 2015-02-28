@@ -1,16 +1,21 @@
 {
   "name": "zip-blocks",
-  "version": "0.0.2",
+  "version": "0.1.0",
+  "description": "Node.js interface to zip files in blocks of predetermined size",
+  "homepage": "https://github.com/polo-language/zip-blocks",
   "author": {
     "name": "Angelo Polo",
     "email": "polo.language@gmail.com"
   },
-  "main": "zip-blocks",
-  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/polo-language/zip-blocks.git"
   },
+  "license": {
+    "type": "MIT",
+    "url": "https://github.com/polo-language/zip-blocks/blob/master/LICENSE"
+  },
+  "main": "zip-blocks",
   "keywords": [
     "zip",
     "archive",
