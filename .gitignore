@@ -1,3 +1,4 @@
 node_modules/
 spec/test_files/
 test.js
+*.tgz

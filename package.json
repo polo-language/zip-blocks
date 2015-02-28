@@ -11,6 +11,15 @@
     "type": "git",
     "url": "https://github.com/polo-language/zip-blocks.git"
   },
+  "keywords": [
+    "zip",
+    "archive",
+    "pack",
+    "package",
+    "block",
+    "blocks",
+    "group"
+  ],
   "dependencies": {
     "archiver": "^0.13.0"
   },
