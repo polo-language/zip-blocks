@@ -9,14 +9,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "TODO"
+    "url": "https://github.com/polo-language/zip-blocks.git"
   },
   "dependencies": {
     "archiver": "^0.13.0"
   },
   "devDependencies": {
     "grunt": "^0.4.5",
-    "grunt-contrib-jshint": "^0.10.0",
     "grunt-jasmine-node": "^0.2.1"
   }
 }
