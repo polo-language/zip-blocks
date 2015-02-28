@@ -1,6 +1,6 @@
 # zip-blocks v0.1.0
 
-interface to zip files in blocks of predetermined size
+Node.js interface to zip files in blocks of predetermined size
 
 ## Install
 
