@@ -1,7 +1,7 @@
 {
   "name": "zip-blocks",
-  "version": "0.1.1",
-  "description": "Node.js interface to zip files in blocks of predetermined size",
+  "version": "0.1.2",
+  "description": "Interface to zip files in blocks of predetermined size",
   "homepage": "https://github.com/polo-language/zip-blocks",
   "author": {
     "name": "Angelo Polo",

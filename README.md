@@ -1,4 +1,4 @@
-# zip-blocks v0.1.0
+# zip-blocks v0.1.2
 
 Interface to zip files in blocks of predetermined size
 
@@ -14,11 +14,11 @@ npm install zip-blocks --save
 #### zipFilesInDir(inputDir, outputDir, [blockSize])
 
 Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified size.
-`blockSize` defaults to 20MB if no value is provided. The value used to determine how many files to place in each block defaults to 1 (equivalent to no compression - for already compressed formats).
+`blockSize` defaults to 20MB if no value is provided. The assumed compression ratio used to determine the maximum number of files per block defaults to 1 (equivalent to no compression).
 
 #### setCompressionRatio(ratio)
 
-Sets the assumed compression ratio used to determine how many files to place into a block to the provided value if it is between 0.01 and 1, inclusive. The default compression ratio is 1 (no compression). Not that setting the compression ratio does not affect the actual zip compression.
+Sets the assumed compression ratio to the provided value - from 0.01 to 1, inclusive. Note that setting the compression ratio does not affect the actual zip compression performance.
 
 #### on(event, callback)
 
