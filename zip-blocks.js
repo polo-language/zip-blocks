@@ -28,30 +28,30 @@ function ZipBlocks() {
   };
 }
 
-ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
+ZipBlocks.prototype.zipFilesInDir = function (inputDir, outputDir, blockSize) {
   'use strict';
   var fs = require('fs')
     , path = require('path')
-    , usageString = 'Usage: zipFilesInDir(sourceDir, [outputDir], [blockSize]).'
+    , USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [blockSize]).'
     , filesReady = 0
     , zipError = this._error
     , blockSizeUnit = this._BLOCK_SIZE_UNIT
     , compressionRatio = this._compressionRatio;
 
   if (arguments.length < 1 || 3 < arguments.length) {
-    zipError(usageString);
+    zipError(USAGE_STRING);
     return;
   }
 
   blockSize = blockSize || this._DEFAULT_BLOCK_SIZE;
 
-  fs.exists(outputDir || '', function (exists) { // use empty str if undefined
-    if (!exists) outputDir = sourceDir;
+  fs.exists(outputDir || '', function (existsOut) { // use empty str if undefined
+    if (!existsOut) outputDir = inputDir;
     getListingAndZip();
   });
   
   function getListingAndZip() {
-    fs.readdir(sourceDir, function (err, listing) {
+    fs.readdir(inputDir, function (err, listing) {
       var files = {};
 
       if (err) {
@@ -59,7 +59,7 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
         return;
       }
       for (var i = 0; i < listing.length; ++i) {
-        runStat(path.join(sourceDir, listing[i]));
+        runStat(path.join(inputDir, listing[i]));
       }
 
       function runStat(filePath) {
@@ -112,7 +112,7 @@ ZipBlocks.prototype.zipFilesInDir = function (sourceDir, outputDir, blockSize) {
 
     for (zipNum = 0; zipNum < blocks.length; ++zipNum) {
       zipFileName = path.join(outputDir,
-                              path.basename(sourceDir) + '_' +
+                              path.basename(inputDir) + '_' +
                                   (zipNum + 1).toString() +
                                   '.zip');
       outFile = fs.createWriteStream(zipFileName);
