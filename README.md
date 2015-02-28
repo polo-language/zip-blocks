@@ -1,6 +1,6 @@
 # zip-blocks v0.1.0
 
-Node.js interface to zip files in blocks of predetermined size
+Interface to zip files in blocks of predetermined size
 
 ## Install
 
@@ -31,15 +31,13 @@ Fired whenever an error occurs in the process.
 ## Example
 
 ```js
-var ZipBlocks = require('./zip-blocks')
+var ZipBlocks = require('zip-blocks')
   , zip = new ZipBlocks()
-  , inPath = 'files/in'
-  , outPath = 'files/out'
   , maxZipSize = 2; // in MB
 
 zip.on('error', function (err) { /* handdle error */ });
 
-zip.zipFilesInDir(inPath, outPath, maxZipSize);
+zip.zipFilesInDir('files/in', 'files/out', maxZipSize);
 ```
 ## Dependencies
 
