@@ -1,4 +1,4 @@
-# zip-blocks v0.1.3
+# zip-blocks v0.1.4
 
 Interface to zip files in blocks of predetermined size
 
@@ -16,7 +16,7 @@ npm install zip-blocks --save
 Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`.
 
 Settings is an object which can contain keys from among the following (default values are given):
-```json
+```js
 {
   blockSize: 20,
   compressionRatio: 1
