@@ -1,7 +1,7 @@
 module.exports = function(grunt) {
   grunt.initConfig({
     jasmine_node: {
-      all: ['spec/']
+      all: ['test/']
     },
   });
 

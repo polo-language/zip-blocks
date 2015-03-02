@@ -1,4 +1,4 @@
-# zip-blocks v0.1.2
+# zip-blocks v0.1.3
 
 Interface to zip files in blocks of predetermined size
 
@@ -11,14 +11,21 @@ npm install zip-blocks --save
 
 ### Methods
 
-#### zipFilesInDir(inputDir, outputDir, [blockSize])
+#### zipFilesInDir(inputDir, [outputDir], [settings])
 
-Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified size.
-`blockSize` defaults to 20MB if no value is provided. The assumed compression ratio used to determine the maximum number of files per block defaults to 1 (equivalent to no compression).
+Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`.
+
+Settings is an object which can contain keys from among the following (default values are given):
+```json
+{
+  blockSize: 20,
+  compressionRatio: 1
+}
+```
 
 #### setCompressionRatio(ratio)
 
-Sets the assumed compression ratio to the provided value - from 0.01 to 1, inclusive. Note that setting the compression ratio does not affect the actual zip compression performance.
+Sets the assumed compression ratio to the provided value (from 0.01 to 1, inclusive). The assumed compression ratio is used to determine the maximum number of files per block. The default is 1 (equivalent to no compression). Note that setting the compression ratio does not affect the actual zip compression performance.
 
 #### on(event, callback)
 
@@ -37,7 +44,7 @@ var ZipBlocks = require('zip-blocks')
 
 zip.on('error', function (err) { /* handdle error */ });
 
-zip.zipFilesInDir('files/in', 'files/out', maxZipSize);
+zip.zipFilesInDir('files/in', 'files/out', { blockSize: maxZipSize });
 ```
 ## Dependencies
 
