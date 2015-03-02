@@ -1,3 +1,4 @@
+/* global beforeEach, describe, it, expect */
 var inPath = './test_files/in/01'
   , outPath = './test_files/out';
 

@@ -1,4 +1,4 @@
 node_modules/
-spec/test_files/
-test.js
-*.tgz
+test/test_files/
+test/test.js
+packed/

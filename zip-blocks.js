@@ -1,5 +1,8 @@
 module.exports = ZipBlocks;
 
+ZipBlocks.prototype.setCompressionRatio = setCompressionRatio;
+ZipBlocks.prototype.zipFilesInDir = zipFilesInDir;
+
 function ZipBlocks() {
   'use strict';
   this._BLOCK_SIZE_UNIT = 1000000; // = 1 million
@@ -18,17 +21,17 @@ function ZipBlocks() {
       this._error('Handler of type \"' + type + '\" not recognized.');
     }
   };
-
-  this.setCompressionRatio = function(ratio) {
-    if (ratio < 0.01 || 1 < ratio) {
-      this._error(this._RATIO_ERROR_STRING);
-      return;
-    }
-    this._compressionRatio = ratio;
-  };
 }
 
-ZipBlocks.prototype.zipFilesInDir = function (inputDir, outputDir, blockSize) {
+function setCompressionRatio(ratio) {
+  if (ratio < 0.01 || 1 < ratio) {
+    this._error(this._RATIO_ERROR_STRING);
+    return;
+  }
+  this._compressionRatio = ratio;
+}
+
+function zipFilesInDir(inputDir, outputDir, blockSize) {
   'use strict';
   var fs = require('fs')
     , path = require('path')
@@ -127,4 +130,4 @@ ZipBlocks.prototype.zipFilesInDir = function (inputDir, outputDir, blockSize) {
       zip.finalize();
     }
   }
-};
+}
