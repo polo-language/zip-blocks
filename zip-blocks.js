@@ -10,6 +10,7 @@ function ZipBlocks() {
   this._blockSize = 20;  // = 20 MB for unit of 1 MB
   this._compressionRatio = 1; // built for files with very high compression ratio
   this._filesOnly = true;
+  this._addOversize = true;
 
   this._error = function (error) {
     console.error(error); // defualt error handling
@@ -33,7 +34,7 @@ function setCompressionRatio(ratio) {
   this._compressionRatio = ratio;
 }
 
-function zipFilesInDir(inputDir, outputDir, settings) {
+function zipFilesInDir(inputDir, outputDir, options) {
   'use strict';
   var fs = require('fs')
     , path = require('path')
@@ -47,11 +48,11 @@ function zipFilesInDir(inputDir, outputDir, settings) {
   }
 
   if (typeof outputDir === 'string') {
-    if (typeof settings === 'object') {
-      parseSettings(settings);
+    if (typeof options === 'object') {
+      parseOptions(options);
     }
   } else if (typeof outputDir === 'object') {
-    parseSettings(outputDir);
+    parseOptions(outputDir);
     outputDir = ''; // use empty str if undefined so fs.exists doesn't throw
   } else {
     outputDir = ''; // use empty str if undefined so fs.exists doesn't throw
@@ -62,18 +63,20 @@ function zipFilesInDir(inputDir, outputDir, settings) {
     getListingAndZip();
   });
 
-  function parseSettings(settings) {
-    for (var key in settings) {
+  function parseOptions(options) {
+    for (var key in options) {
       switch (key) {
       case 'blockSize':
-        thisZB._blockSize = settings[key];
+        thisZB._blockSize = options[key];
         break;
       case 'compressionRatio':
-        thisZB._compressionRatio = settings[key];
+        thisZB._compressionRatio = options[key];
         break;
       case 'filesOnly':
-        thisZB._filesOnly = settings[key];
+        thisZB._filesOnly = options[key];
         break;
+      case 'addOversize':
+        thisZB._addOversize = options[key];
       }
     }
   }
@@ -148,13 +151,22 @@ function zipFilesInDir(inputDir, outputDir, settings) {
     blocks[blockNum] = {};
     for (var key in files) {
       if (files[key].size > max) {
-        thisZB._error(key + ' is too big for any block - file skipped.');
+        if (thisZB._addOversize) {
+          blocks[blockNum + 1] = blocks[blockNum];
+          blocks[blockNum] = {};
+          blocks[blockNum][key] = files[key].isDir;
+          ++blockNum;
+        } else {
+          thisZB._error(key + ' is too big for any block - file skipped.');
+        }
         continue;
       }
+
       total += files[key].size;
       if (total > max) {
         blockNum += 1;
         blocks[blockNum] = {};
+
         total = files[key].size;
       }
       blocks[blockNum][key] = files[key].isDir;

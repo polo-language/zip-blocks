@@ -11,11 +11,11 @@ npm install zip-blocks --save
 
 ### Methods
 
-#### zipFilesInDir(inputDir, [outputDir], [settings])
+#### zipFilesInDir(inputDir, [outputDir], [options])
 
 Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`. If `filesOnly` is set to false, directories at the root of `inputDir` will be included as well.
 
-Settings is an object which can contain keys from among the following (default values are given):
+Options is an object which can contain keys from among the following (default values are given):
 ```js
 {
   blockSize: 20, // in MB
@@ -41,14 +41,14 @@ Fired whenever an error occurs in the process.
 ```js
 var ZipBlocks = require('zip-blocks')
   , zip = new ZipBlocks()
-  , settings = {
+  , options = {
       blockSize: 2,     // in MB
       filesOnly: false  // include directories
     };
 
 zip.on('error', function (err) { /* handdle error */ });
 
-zip.zipFilesInDir('files/in', 'files/out', settings);
+zip.zipFilesInDir('files/in', 'files/out', options);
 ```
 ## Uses
 
