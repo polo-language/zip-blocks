@@ -88,27 +88,33 @@ function zipFilesInDir(inputDir, outputDir, settings) {
         thisZB._error(err);
         return;
       }
-      for (var i = 0; i < listing.length; ++i) {
-        runStat(path.join(inputDir, listing[i]));
+      for (var item in listing) {
+        runStat(path.join(inputDir, listing[item]));
       }
 
       function runStat(filePath) {
         fs.stat(filePath, function (err, stats) {
           var thisFile;
+          
+          ++filesReady; // ++ on error too, so zipping proceeds if no throw
           if (err) {
-            ++filesReady; // ++ on error too, so zipping proceeds if no throw
             thisZB._error(err);
             return;
           }
 
-          thisFile = files[filePath] = {};
-          if (!thisZB._filesOnly && stats.isDirectory()) {
-            thisFile.isDir = true;
-            setDirSize(filePath, thisFile);
-          } else {
+          if (stats.isDirectory()) {
+            if (!thisZB._filesOnly) {
+              thisFile = files[filePath] = {};
+              thisFile.isDir = true;
+              setDirSize(filePath, thisFile);
+            } else {
+              checkAllStatsCollected();
+            }
+          } else if (stats.isFile()) {
+            thisFile = files[filePath] = {};
             thisFile.isDir = false;
             thisFile.size = stats.size;
-            incrementAndTestAllCounted();
+            checkAllStatsCollected();
           }
         });
 
@@ -119,12 +125,11 @@ function zipFilesInDir(inputDir, outputDir, settings) {
             } else {
               objWithSizeField.size = size;
             }
-            incrementAndTestAllCounted();
+            checkAllStatsCollected();
           });
         }
 
-        function incrementAndTestAllCounted() {
-          ++filesReady;
+        function checkAllStatsCollected() {
           if (filesReady === listing.length) {
             doZip(getBlocks(files));
           }
@@ -161,10 +166,9 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       , zip
       , zipFileName
       , outFile
-      , zipNum
       , thisBlock;
 
-    for (zipNum = 0; zipNum < blocks.length; ++zipNum) {
+    for (var zipNum in blocks) {
       zipFileName = path.join(outputDir,
                               path.basename(inputDir) + '_' +
                                   (zipNum + 1).toString() +
