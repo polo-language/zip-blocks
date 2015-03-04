@@ -9,7 +9,7 @@ function ZipBlocks() {
   this._BLOCK_SIZE_UNIT = 1000000; // = 1 million
   this._blockSize = 20;  // = 20 MB for unit of 1 MB
   this._compressionRatio = 1; // built for files with very high compression ratio
-  //this._filesOnly = true;
+  this._filesOnly = true;
 
   this._error = function (error) {
     console.error(error); // defualt error handling
@@ -22,7 +22,7 @@ function on(type, callback) {
   } else {
     this._error('Handler of type \"' + type + '\" not recognized.');
   }
-};
+}
 
 function setCompressionRatio(ratio) {
   var _RATIO_ERROR_STRING = 'Compression ratio must be between 0.01 and 1, inclusive. Using 1.';
@@ -79,6 +79,8 @@ function zipFilesInDir(inputDir, outputDir, settings) {
   }
   
   function getListingAndZip() {
+    var du = require('du');
+
     fs.readdir(inputDir, function (err, listing) {
       var files = {};
 
@@ -92,18 +94,36 @@ function zipFilesInDir(inputDir, outputDir, settings) {
 
       function runStat(filePath) {
         fs.stat(filePath, function (err, stats) {
-          ++filesReady; // ++ on error too, so zipping proceeds if no throw
+          var thisFile;
           if (err) {
+            ++filesReady; // ++ on error too, so zipping proceeds if no throw
             thisZB._error(err);
             return;
           }
-          if (stats.isFile()) {
-            files[filePath] = stats.size;
+
+          thisFile = files[filePath] = {};
+          if (!thisZB.filesOnly && stats.isDirectory()) {
+            thisFile.isDir = true;
+            setDirSize(filePath, thisFile); // should be async??
+          } else {
+            thisFile.isDir = false;
+            thisFile.size = stats.size;
           }
+          ++filesReady;
           if (filesReady === listing.length) {
             doZip(getBlocks(files));
           }
         });
+
+        function setDirSize(dir, objWithSizeField) {
+          du(dir, function (err, size) {
+            if (err) {
+              thisZB._error(err);
+            } else {
+              objWithSizeField.size = size;
+            }
+          });
+        }
       }
     });
   }
@@ -114,17 +134,17 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       , blockNum = 0
       , max = thisZB._blockSize * thisZB._BLOCK_SIZE_UNIT / thisZB._compressionRatio;
 
-    blocks[blockNum] = [];
+    blocks[blockNum] = []; // TODO: change to objects like files with isDir field
     for (var key in files) {
-      if (files[key] > max) {
+      if (files[key].size > max) {
         thisZB._error(key + ' is too big for any block - file skipped.');
         continue;
       }
-      total += files[key];
+      total += files[key].size;
       if (total > max) {
         blockNum += 1;
         blocks[blockNum] = [];
-        total = files[key];
+        total = files[key].size;
       }
       blocks[blockNum].push(key);
     }

@@ -46,7 +46,7 @@ zip.on('error', function (err) { /* handdle error */ });
 
 zip.zipFilesInDir('files/in', 'files/out', { blockSize: maxZipSize });
 ```
-## Dependencies
+## Special Thanks
 
 [archiver](https://www.npmjs.com/package/archiver)
 

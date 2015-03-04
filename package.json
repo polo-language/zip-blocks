@@ -26,7 +26,8 @@
     "group"
   ],
   "dependencies": {
-    "archiver": "^0.13.1"
+    "archiver": "^0.13.1",
+    "du": "^0.1.0"
   },
   "devDependencies": {
     "grunt": "^0.4.5",
