@@ -13,14 +13,15 @@ npm install zip-blocks --save
 
 #### zipFilesInDir(inputDir, [outputDir], [options])
 
-Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`. If `filesOnly` is set to false, directories at the root of `inputDir` will be included as well.
+Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`. If `filesOnly` is set to false, directories at the root of `inputDir` will be included as well. If `addOversize` is left at `true`, individual files/directories exceeding the maximum block size will be added to their own archive; for `false`, they will be skipped and an error event emitted.
 
 Options is an object which can contain keys from among the following (default values are given):
 ```js
 {
   blockSize: 20, // in MB
   compressionRatio: 1,
-  filesOnly: true
+  filesOnly: true,
+  addOversize: true
 }
 ```
 
