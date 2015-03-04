@@ -71,9 +71,9 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       case 'compressionRatio':
         thisZB._compressionRatio = settings[key];
         break;
-      /*case 'filesOnly':
+      case 'filesOnly':
         thisZB._filesOnly = settings[key];
-        break;*/
+        break;
       }
     }
   }
@@ -96,9 +96,9 @@ function zipFilesInDir(inputDir, outputDir, settings) {
         fs.stat(filePath, function (err, stats) {
           var thisFile;
           
-          ++filesReady; // ++ on error too, so zipping proceeds if no throw
           if (err) {
             thisZB._error(err);
+            checkAllStatsCollected();
             return;
           }
 
@@ -130,6 +130,7 @@ function zipFilesInDir(inputDir, outputDir, settings) {
         }
 
         function checkAllStatsCollected() {
+          ++filesReady;
           if (filesReady === listing.length) {
             doZip(getBlocks(files));
           }
@@ -170,9 +171,7 @@ function zipFilesInDir(inputDir, outputDir, settings) {
 
     for (var zipNum in blocks) {
       zipFileName = path.join(outputDir,
-                              path.basename(inputDir) + '_' +
-                                  (zipNum + 1).toString() +
-                                  '.zip');
+                              path.basename(inputDir) + '_' + zipNum + '.zip');
       outFile = fs.createWriteStream(zipFileName);
       zip = archiver('zip');
       zip.on('error', thisZB._error);

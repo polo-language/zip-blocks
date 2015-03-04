@@ -1,4 +1,4 @@
-# zip-blocks v0.1.4
+# zip-blocks v0.2.0
 
 Interface to zip files in blocks of predetermined size
 
@@ -13,13 +13,14 @@ npm install zip-blocks --save
 
 #### zipFilesInDir(inputDir, [outputDir], [settings])
 
-Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`.
+Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the specified `blockSize`. If no `outputDir` is provided, zip files are written to `inputDir`. If `filesOnly` is set to false, directories at the root of `inputDir` will be included as well.
 
 Settings is an object which can contain keys from among the following (default values are given):
 ```js
 {
-  blockSize: 20,
-  compressionRatio: 1
+  blockSize: 20, // in MB
+  compressionRatio: 1,
+  filesOnly: true
 }
 ```
 
@@ -40,13 +41,16 @@ Fired whenever an error occurs in the process.
 ```js
 var ZipBlocks = require('zip-blocks')
   , zip = new ZipBlocks()
-  , maxZipSize = 2; // in MB
+  , settings = {
+      blockSize: 2,     // in MB
+      filesOnly: false  // include directories
+    };
 
 zip.on('error', function (err) { /* handdle error */ });
 
-zip.zipFilesInDir('files/in', 'files/out', { blockSize: maxZipSize });
+zip.zipFilesInDir('files/in', 'files/out', settings);
 ```
-## Special Thanks
+## Uses
 
 [archiver](https://www.npmjs.com/package/archiver)
 
