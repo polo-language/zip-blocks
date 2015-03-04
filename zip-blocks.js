@@ -102,16 +102,13 @@ function zipFilesInDir(inputDir, outputDir, settings) {
           }
 
           thisFile = files[filePath] = {};
-          if (!thisZB.filesOnly && stats.isDirectory()) {
+          if (!thisZB._filesOnly && stats.isDirectory()) {
             thisFile.isDir = true;
-            setDirSize(filePath, thisFile); // should be async??
+            setDirSize(filePath, thisFile);
           } else {
             thisFile.isDir = false;
             thisFile.size = stats.size;
-          }
-          ++filesReady;
-          if (filesReady === listing.length) {
-            doZip(getBlocks(files));
+            incrementAndTestAllCounted();
           }
         });
 
@@ -122,7 +119,15 @@ function zipFilesInDir(inputDir, outputDir, settings) {
             } else {
               objWithSizeField.size = size;
             }
+            incrementAndTestAllCounted();
           });
+        }
+
+        function incrementAndTestAllCounted() {
+          ++filesReady;
+          if (filesReady === listing.length) {
+            doZip(getBlocks(files));
+          }
         }
       }
     });
@@ -134,7 +139,7 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       , blockNum = 0
       , max = thisZB._blockSize * thisZB._BLOCK_SIZE_UNIT / thisZB._compressionRatio;
 
-    blocks[blockNum] = []; // TODO: change to objects like files with isDir field
+    blocks[blockNum] = {};
     for (var key in files) {
       if (files[key].size > max) {
         thisZB._error(key + ' is too big for any block - file skipped.');
@@ -143,10 +148,10 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       total += files[key].size;
       if (total > max) {
         blockNum += 1;
-        blocks[blockNum] = [];
+        blocks[blockNum] = {};
         total = files[key].size;
       }
-      blocks[blockNum].push(key);
+      blocks[blockNum][key] = files[key].isDir;
     }
     return blocks;
   }
@@ -156,7 +161,8 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       , zip
       , zipFileName
       , outFile
-      , zipNum;
+      , zipNum
+      , thisBlock;
 
     for (zipNum = 0; zipNum < blocks.length; ++zipNum) {
       zipFileName = path.join(outputDir,
@@ -168,9 +174,13 @@ function zipFilesInDir(inputDir, outputDir, settings) {
       zip.on('error', thisZB._error);
       zip.pipe(outFile);
 
-      for (var i = 0; i < blocks[zipNum].length; ++i) {
-        zip.append(fs.createReadStream(blocks[zipNum][i]),
-                   { name: path.basename(blocks[zipNum][i]) });
+      thisBlock = blocks[zipNum];
+      for (var key in thisBlock) {
+        if (thisBlock[key]) {
+          zip.directory(key, path.basename(key));
+        } else {
+          zip.append(fs.createReadStream(key), { name: path.basename(key) });
+        }
       }
       zip.finalize();
     }
