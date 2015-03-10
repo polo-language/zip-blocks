@@ -1,34 +1,43 @@
-module.exports = ZipBlocks;
+var inherits = require('util').inherits
+  , EventEmitter = require('events').EventEmitter;
 
-ZipBlocks.prototype.on = on;
-ZipBlocks.prototype.setCompressionRatio = setCompressionRatio;
-ZipBlocks.prototype.zipFilesInDir = zipFilesInDir;
+var ZipBlocksFactory = module.exports = function () {
+  var zipBlocks = new ZipBlocks();
+  zipBlocks.on('error', zipBlocks._onError);
+  zipBlocks.on('newListener', zipBlocks._syncErrorListener);
+  return zipBlocks;
+};
 
 function ZipBlocks() {
   'use strict';
-  this._BLOCK_SIZE_UNIT = 1000000; // = 1 million
-  this._blockSize = 20;  // = 20 MB for unit of 1 MB
-  this._compressionRatio = 1; // built for files with very high compression ratio
+  this._BLOCK_SIZE_UNIT = 1000000;  // = 1 million
+  this._blockSize = 20;             // = 20 MB for unit of 1 MB
+  this._compressionRatio = 1;       // for files with high compression ratio
   this._filesOnly = true;
   this._addOversize = true;
 
-  this._error = function (error) {
-    console.error(error); // defualt error handling
+  this._onError = function (err) {
+    console.error(err.stack); // defualt error handling
   };
 }
 
-function on(type, callback) {
-  if (type === 'error') {
-    this._error = callback;
-  } else {
-    this._error('Handler of type \"' + type + '\" not recognized.');
+inherits(ZipBlocks, EventEmitter);
+
+ZipBlocks.prototype.setCompressionRatio = setCompressionRatio;
+ZipBlocks.prototype.zipFilesInDir = zipFilesInDir;
+ZipBlocks.prototype._syncErrorListener = _syncErrorListener;
+
+function  _syncErrorListener(event, listener) {
+  if (event === 'error') {
+    this.removeListener('error', this._onError);
+    this._onError = listener;
   }
 }
 
 function setCompressionRatio(ratio) {
   var _RATIO_ERROR_STRING = 'Compression ratio must be between 0.01 and 1, inclusive. Using 1.';
   if (ratio < 0.01 || 1 < ratio) {
-    this._error(_RATIO_ERROR_STRING);
+    this.emit('error', new Error(_RATIO_ERROR_STRING));
     return;
   }
   this._compressionRatio = ratio;
@@ -43,7 +52,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
     , thisZB = this;
 
   if (arguments.length < 1 || 3 < arguments.length) {
-    thisZB._error(USAGE_STRING);
+    thisZB.emit('error', new Error(USAGE_STRING));
     return;
   }
 
@@ -51,11 +60,12 @@ function zipFilesInDir(inputDir, outputDir, options) {
     if (typeof options === 'object') {
       parseOptions(options);
     }
-  } else if (typeof outputDir === 'object') {
-    parseOptions(outputDir);
-    outputDir = ''; // use empty str if undefined so fs.exists doesn't throw
   } else {
     outputDir = ''; // use empty str if undefined so fs.exists doesn't throw
+
+    if (typeof outputDir === 'object') {
+      parseOptions(outputDir);
+    }
   }
 
   fs.exists(outputDir, function (existsOut) {
@@ -88,7 +98,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
       var files = {};
 
       if (err) {
-        thisZB._error(err);
+        thisZB.emit('error', err);
         return;
       }
       for (var item in listing) {
@@ -100,7 +110,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
           var thisFile;
           
           if (err) {
-            thisZB._error(err);
+            thisZB.emit('error', err);
             checkAllStatsCollected();
             return;
           }
@@ -124,7 +134,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
         function setDirSize(dir, objWithSizeField) {
           du(dir, function (err, size) {
             if (err) {
-              thisZB._error(err);
+              thisZB.emit('error', err);
             } else {
               objWithSizeField.size = size;
             }
@@ -157,7 +167,8 @@ function zipFilesInDir(inputDir, outputDir, options) {
           blocks[blockNum][key] = files[key].isDir;
           ++blockNum;
         } else {
-          thisZB._error(key + ' is too big for any block - file skipped.');
+          console.log('Got here!');
+          thisZB.emit('error', new Error(key + ' is too big for any block - file skipped.'));
         }
         continue;
       }
@@ -186,7 +197,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
                               path.basename(inputDir) + '_' + zipNum + '.zip');
       outFile = fs.createWriteStream(zipFileName);
       zip = archiver('zip');
-      zip.on('error', thisZB._error);
+      zip.on('error', thisZB.emit.bind(thisZB, 'error'));
       zip.pipe(outFile);
 
       thisBlock = blocks[zipNum];
