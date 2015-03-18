@@ -1,6 +1,6 @@
 {
   "name": "zip-blocks",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Interface to zip files and directories in blocks of predetermined size",
   "homepage": "https://github.com/polo-language/zip-blocks",
   "author": {
@@ -23,10 +23,12 @@
     "package",
     "block",
     "blocks",
-    "group"
+    "group",
+    "email"
   ],
   "dependencies": {
     "archiver": "^0.14.3",
+    "bin-packer": "^0.1.0",
     "du": "^0.1.0"
   },
   "devDependencies": {

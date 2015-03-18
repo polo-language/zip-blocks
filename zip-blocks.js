@@ -47,7 +47,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
   'use strict';
   var fs = require('fs')
     , path = require('path')
-    , USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [blockSize]).'
+    , USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [options]).'
     , filesReady = 0
     , thisZB = this;
 
@@ -87,6 +87,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
         break;
       case 'addOversize':
         thisZB._addOversize = options[key];
+        break;
       }
     }
   }
@@ -153,35 +154,17 @@ function zipFilesInDir(inputDir, outputDir, options) {
   }
 
   function getBlocks(files) {
-    var blocks = []
-      , total = 0
-      , blockNum = 0
-      , max = thisZB._blockSize * thisZB._BLOCK_SIZE_UNIT / thisZB._compressionRatio;
-
-    blocks[blockNum] = {};
-    for (var key in files) {
-      if (files[key].size > max) {
-        if (thisZB._addOversize) {
-          blocks[blockNum + 1] = blocks[blockNum];
-          blocks[blockNum] = {};
-          blocks[blockNum][key] = files[key];
-          ++blockNum;
-        } else {
-          thisZB.emit('error', new Error(key + ' is too big for any block - file skipped.'));
-        }
-        continue;
-      }
-
-      total += files[key].size;
-      if (total > max) {
-        blockNum += 1;
-        blocks[blockNum] = {};
-
-        total = files[key].size;
-      }
-      blocks[blockNum][key] = files[key];
+    var blocks
+      , max = thisZB._blockSize * thisZB._BLOCK_SIZE_UNIT / thisZB._compressionRatio
+      , bp = require('bin-packer');
+    
+    if (thisZB._addOversize) {
+      return bp.firstFitDecreasing(files, 'size', max, true);
+    } else {
+      blocks = bp.firstFitDecreasing(files, 'size', max, false);
+      blocks.pop();  // remove last cell in array with all oversized
+      return blocks;
     }
-    return blocks;
   }
 
   function doZip(blocks) {

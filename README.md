@@ -1,4 +1,4 @@
-# zip-blocks v0.2.2
+# zip-blocks v0.3.0
 
 Interface to zip files in blocks of predetermined maximum size
 
@@ -49,7 +49,3 @@ zipB.on('error', function (err) { /* handdle error */ });
 
 zipB.zipFilesInDir('files/in', 'files/out', options);
 ```
-## Uses
-
-[archiver](https://www.npmjs.com/package/archiver)
-
