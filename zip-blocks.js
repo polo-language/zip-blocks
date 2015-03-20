@@ -4,7 +4,7 @@ var inherits = require('util').inherits
 var ZipBlocksFactory = module.exports = function () {
   var zipBlocks = new ZipBlocks();
   zipBlocks.on('error', zipBlocks._onError);
-  zipBlocks.on('newListener', zipBlocks._syncErrorListener);
+  zipBlocks.on('newListener', syncErrorListener.bind(zipBlocks));
   return zipBlocks;
 };
 
@@ -24,10 +24,10 @@ function ZipBlocks() {
 inherits(ZipBlocks, EventEmitter);
 
 ZipBlocks.prototype.setCompressionRatio = setCompressionRatio;
+ZipBlocks.prototype.setOptions = setOptions;
 ZipBlocks.prototype.zipFilesInDir = zipFilesInDir;
-ZipBlocks.prototype._syncErrorListener = _syncErrorListener;
 
-function  _syncErrorListener(event, listener) {
+function  syncErrorListener(event, listener) {
   if (event === 'error') {
     this.removeListener('error', this._onError);
     this._onError = listener;
@@ -41,6 +41,28 @@ function setCompressionRatio(ratio) {
     return;
   }
   this._compressionRatio = ratio;
+}
+
+function setOptions(options) {
+  parseOptions.call(this, options);
+}
+
+function parseOptions(options) {
+  for (var key in options) {
+    switch (key) {
+    case 'blockSize':
+      this._blockSize = options[key];
+      break;
+    case 'compressionRatio':
+      setCompressionRatio.call(this, options[key])
+      break;
+    case 'filesOnly':
+      this._filesOnly = options[key];
+      break;
+    case 'addOversize':
+      this._addOversize = options[key];
+    }
+  }
 }
 
 function zipFilesInDir(inputDir, outputDir, options) {
@@ -58,13 +80,13 @@ function zipFilesInDir(inputDir, outputDir, options) {
 
   if (typeof outputDir === 'string') {
     if (typeof options === 'object') {
-      parseOptions(options);
+      parseOptions.call(this, options);
     }
   } else {
     outputDir = ''; // use empty str if undefined so fs.exists doesn't throw
 
     if (typeof outputDir === 'object') {
-      parseOptions(outputDir);
+      parseOptions.call(this, outputDir);
     }
   }
 
@@ -73,24 +95,6 @@ function zipFilesInDir(inputDir, outputDir, options) {
     getListingAndZip();
   });
 
-  function parseOptions(options) {
-    for (var key in options) {
-      switch (key) {
-      case 'blockSize':
-        thisZB._blockSize = options[key];
-        break;
-      case 'compressionRatio':
-        thisZB._compressionRatio = options[key];
-        break;
-      case 'filesOnly':
-        thisZB._filesOnly = options[key];
-        break;
-      case 'addOversize':
-        thisZB._addOversize = options[key];
-      }
-    }
-  }
-  
   function getListingAndZip() {
     var du = require('du');
 
