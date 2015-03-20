@@ -1,5 +1,7 @@
 var inherits = require('util').inherits
   , EventEmitter = require('events').EventEmitter
+  , fs = require('fs')
+  , path = require('path')
 
 var ZipBlocksFactory = module.exports = function () {
   var zipBlocks = new ZipBlocks()
@@ -15,6 +17,7 @@ function ZipBlocks() {
   this._compressionRatio = 1       // for files with high compression ratio
   this._filesOnly = true
   this._addOversize = true
+  this._name = undefined
 
   this._onError = function (err) {
     console.error(err.stack) // defualt error handling
@@ -61,44 +64,56 @@ function parseOptions(options) {
       break
     case 'addOversize':
       this._addOversize = options[key]
+      break
+    case 'name':
+      this._name = options[key]
+      break
     }
   }
 }
 
-function zipFilesInDir(inputDir, outputDir, options) {
+function handleArgs(args, callback) {
+  var inPath = args[0]
+    , outPath = args[1]
+
+  if (typeof args[1] === 'string') {
+    if (typeof args[2] === 'object') {
+      parseOptions.call(this, args[2])
+    }
+  } else {
+    outPath = '' // use empty str if undefined so fs.exists doesn't throw
+
+    if (typeof args[1] === 'object') {
+      parseOptions.call(this, args[1])
+    }
+  }
+
+  this._name = this._name || inPath
+
+  fs.exists(outPath, function (existsOut) {
+    if (!existsOut) outPath = inPath
+    callback(inPath, outPath)
+  })
+  //DELETE return {in: inPath, out: outPath}
+}
+
+function zipFilesInDir() {
   'use strict'
-  var fs = require('fs')
-    , path = require('path')
-    , USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [options]).'
+  var USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [options]).'
     , filesReady = 0
     , thisZB = this
+    , argPaths
 
   if (arguments.length < 1 || 3 < arguments.length) {
     thisZB.emit('error', new Error(USAGE_STRING))
     return
   }
+  handleArgs.call(this, arguments, getListingAndZip)
 
-  if (typeof outputDir === 'string') {
-    if (typeof options === 'object') {
-      parseOptions.call(this, options)
-    }
-  } else {
-    outputDir = '' // use empty str if undefined so fs.exists doesn't throw
-
-    if (typeof outputDir === 'object') {
-      parseOptions.call(this, outputDir)
-    }
-  }
-
-  fs.exists(outputDir, function (existsOut) {
-    if (!existsOut) outputDir = inputDir
-    getListingAndZip()
-  })
-
-  function getListingAndZip() {
+  function getListingAndZip(inPath, outPath) {
     var du = require('du')
 
-    fs.readdir(inputDir, function (err, listing) {
+    fs.readdir(inPath, function (err, listing) {
       var files = {}
 
       if (err) {
@@ -106,7 +121,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
         return
       }
       for (var item in listing) {
-        runStat(path.join(inputDir, listing[item]))
+        runStat(path.join(inPath, listing[item]))
       }
 
       function runStat(filePath) {
@@ -149,7 +164,7 @@ function zipFilesInDir(inputDir, outputDir, options) {
         function checkAllStatsCollected() {
           ++filesReady
           if (filesReady === listing.length) {
-            doZip(getBlocks(files))
+            doZip.call(thisZB, getBlocks(files), outPath)
           }
         }
       }
@@ -171,31 +186,31 @@ function zipFilesInDir(inputDir, outputDir, options) {
       return blocks
     }
   }
+}
 
-  function doZip(blocks) {
-    var archiver = require('archiver')
-      , zip
-      , zipFileName
-      , outFile
-      , thisBlock
+function doZip(blocks, outPath) {
+  var archiver = require('archiver')
+    , zip
+    , zipFileName
+    , outFile
+    , thisBlock
 
-    for (var zipNum in blocks) {
-      zipFileName = path.join(outputDir,
-                              path.basename(inputDir) + '_' + zipNum + '.zip')
-      outFile = fs.createWriteStream(zipFileName)
-      zip = archiver('zip')
-      zip.on('error', thisZB.emit.bind(thisZB, 'error'))
-      zip.pipe(outFile)
+  for (var zipNum in blocks) {
+    zipFileName = path.join(outPath,
+                            path.basename(this._name) + '_' + zipNum + '.zip')
+    outFile = fs.createWriteStream(zipFileName)
+    zip = archiver('zip')
+    zip.on('error', this.emit.bind(this, 'error'))
+    zip.pipe(outFile)
 
-      thisBlock = blocks[zipNum]
-      for (var key in thisBlock) {
-        if (thisBlock[key].isDir) {
-          zip.directory(key, path.basename(key))
-        } else {
-          zip.append(fs.createReadStream(key), { name: path.basename(key) })
-        }
+    thisBlock = blocks[zipNum]
+    for (var key in thisBlock) {
+      if (thisBlock[key].isDir) {
+        zip.directory(key, path.basename(key))
+      } else {
+        zip.append(fs.createReadStream(key), { name: path.basename(key) })
       }
-      zip.finalize()
     }
+    zip.finalize()
   }
 }
