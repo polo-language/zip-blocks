@@ -2,6 +2,8 @@ var inherits = require('util').inherits
   , EventEmitter = require('events').EventEmitter
   , fs = require('fs')
   , path = require('path')
+  , du = require('du')
+  , statOver = require('./stat-over')
 
 var ZipBlocksFactory = module.exports = function () {
   var zipBlocks = new ZipBlocks()
@@ -73,14 +75,52 @@ function parseOptions(options) {
 }
 
 function zipFilesInDir() {
-  'use strict'
-  var USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [options]).'
+  var that = this
+    , files = {}
 
   if (arguments.length < 1 || 3 < arguments.length) {
-    this.emit('error', new Error(USAGE_STRING))
+    this.emit('error', new Error('Usage: zipFilesInDir(inputDir, [outputDir], [options]).'))
     return
   }
-  handleArgs.call(this, arguments, getListingAndZip)
+  handleArgs.call(this, arguments, listAndZip)
+
+  function listAndZip(inPath, outPath) {
+    statOver(inPath, onFile, onDir, elseErr, blockAndZip)
+
+    function elseErr(err, callback) {
+      that.emit('error', err)
+      callback()
+    }
+
+    function onFile(filePath, stats, callback) {
+      files[filePath] = {}
+      files[filePath].isDir = false
+      files[filePath].size = stats.size
+      callback()
+    }
+
+    function onDir(filePath, stat, callback) {
+      if (!that._filesOnly) {
+        var thisFile = files[filePath] = {}
+        thisFile.isDir = true
+        du(filePath, function (err, size) {
+DEBUG:          console.log('test: ' +filePath)
+          if (err) {
+            that.emit('error', err)
+          } else {
+            thisFile.size = size
+          }
+          callback()
+        })
+      } else {
+        callback()
+      }
+    }
+
+    function blockAndZip() {
+      doZip.call(that, getBlocks.call(that, files), outPath)
+    }
+  }
 }
 
 function handleArgs(args, callback) {
@@ -108,9 +148,8 @@ function handleArgs(args, callback) {
   })
 }
 
-function getListingAndZip(inPath, outPath) {
-  var du = require('du')
-    , thisZB = this
+/*function getListingAndZip(inPath, outPath) {
+  var thisZB = this
     , filesReady = 0
 
   fs.readdir(inPath, function (err, listing) {
@@ -169,7 +208,7 @@ function getListingAndZip(inPath, outPath) {
       }
     }
   })
-}
+}*/
 
 function getBlocks(files) {
   var blocks
