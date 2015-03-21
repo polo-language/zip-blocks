@@ -13,12 +13,11 @@ npm install zip-blocks --save
 
 #### zipFilesInDir(inputDir, [outputDir], [options])
 
-Creates zip archives of all files at the root of `inputDir`, grouping files into blocks of less than or equal to the `blockSize` specified in `options`. If no `outputDir` is provided, zip files are written to `inputDir`. 
-
+Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. 
 
 #### setOptions(options)
 
-`options` is an object which can contain keys from among the following (default values are given):
+`options` is an object containing keys from among the following (default values are given):
 ```js
 {
   blockSize: 20, // in MB

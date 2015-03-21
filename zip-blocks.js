@@ -72,9 +72,21 @@ function parseOptions(options) {
   }
 }
 
+function zipFilesInDir() {
+  'use strict'
+  var USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [options]).'
+
+  if (arguments.length < 1 || 3 < arguments.length) {
+    this.emit('error', new Error(USAGE_STRING))
+    return
+  }
+  handleArgs.call(this, arguments, getListingAndZip)
+}
+
 function handleArgs(args, callback) {
   var inPath = args[0]
     , outPath = args[1]
+    , that = this
 
   if (typeof args[1] === 'string') {
     if (typeof args[2] === 'object') {
@@ -92,99 +104,86 @@ function handleArgs(args, callback) {
 
   fs.exists(outPath, function (existsOut) {
     if (!existsOut) outPath = inPath
-    callback(inPath, outPath)
+    callback.call(that, inPath, outPath)
   })
-  //DELETE return {in: inPath, out: outPath}
 }
 
-function zipFilesInDir() {
-  'use strict'
-  var USAGE_STRING = 'Usage: zipFilesInDir(inputDir, [outputDir], [options]).'
-    , filesReady = 0
+function getListingAndZip(inPath, outPath) {
+  var du = require('du')
     , thisZB = this
-    , argPaths
+    , filesReady = 0
 
-  if (arguments.length < 1 || 3 < arguments.length) {
-    thisZB.emit('error', new Error(USAGE_STRING))
-    return
-  }
-  handleArgs.call(this, arguments, getListingAndZip)
+  fs.readdir(inPath, function (err, listing) {
+    var files = {}
 
-  function getListingAndZip(inPath, outPath) {
-    var du = require('du')
+    if (err) {
+      thisZB.emit('error', err)
+      return
+    }
+    for (var item in listing) {
+      runStat(path.join(inPath, listing[item]))
+    }
 
-    fs.readdir(inPath, function (err, listing) {
-      var files = {}
+    function runStat(filePath) {
+      fs.stat(filePath, function (err, stats) {
+        var thisFile
+        
+        if (err) {
+          thisZB.emit('error', err)
+          checkAllStatsCollected()
+          return
+        }
 
-      if (err) {
-        thisZB.emit('error', err)
-        return
-      }
-      for (var item in listing) {
-        runStat(path.join(inPath, listing[item]))
-      }
+        if (stats.isDirectory()) {
+          if (!thisZB._filesOnly) {
+            thisFile = files[filePath] = {}
+            thisFile.isDir = true
+            setDirSize(filePath, thisFile)
+          } else {
+            checkAllStatsCollected()
+          }
+        } else if (stats.isFile()) {
+          thisFile = files[filePath] = {}
+          thisFile.isDir = false
+          thisFile.size = stats.size
+          checkAllStatsCollected()
+        }
+      })
 
-      function runStat(filePath) {
-        fs.stat(filePath, function (err, stats) {
-          var thisFile
-          
+      function setDirSize(dir, objWithSizeField) {
+        du(dir, function (err, size) {
           if (err) {
             thisZB.emit('error', err)
-            checkAllStatsCollected()
-            return
+          } else {
+            objWithSizeField.size = size
           }
-
-          if (stats.isDirectory()) {
-            if (!thisZB._filesOnly) {
-              thisFile = files[filePath] = {}
-              thisFile.isDir = true
-              setDirSize(filePath, thisFile)
-            } else {
-              checkAllStatsCollected()
-            }
-          } else if (stats.isFile()) {
-            thisFile = files[filePath] = {}
-            thisFile.isDir = false
-            thisFile.size = stats.size
-            checkAllStatsCollected()
-          }
+          checkAllStatsCollected()
         })
+      }
 
-        function setDirSize(dir, objWithSizeField) {
-          du(dir, function (err, size) {
-            if (err) {
-              thisZB.emit('error', err)
-            } else {
-              objWithSizeField.size = size
-            }
-            checkAllStatsCollected()
-          })
-        }
-
-        function checkAllStatsCollected() {
-          ++filesReady
-          if (filesReady === listing.length) {
-            doZip.call(thisZB, getBlocks(files), outPath)
-          }
+      function checkAllStatsCollected() {
+        ++filesReady
+        if (filesReady === listing.length) {
+          doZip.call(thisZB, getBlocks.call(thisZB, files), outPath)
         }
       }
-    })
-  }
-
-  function getBlocks(files) {
-    var blocks
-      , max = thisZB._blockSize * thisZB._BLOCK_SIZE_UNIT / thisZB._compressionRatio
-      , bp = require('bin-packer')
-      , oversized
-    
-    if (thisZB._addOversize) {
-      return bp.firstFitDecreasing(files, 'size', max, true)
-    } else {
-      blocks = bp.firstFitDecreasing(files, 'size', max, false)
-      oversized = blocks.pop()
-      thisZB.emit('error', new Error('Oversized: ' + JSON.stringify(oversized)))
-      return blocks
     }
+  })
+}
+
+function getBlocks(files) {
+  var blocks
+    , max = this._blockSize * this._BLOCK_SIZE_UNIT / this._compressionRatio
+    , bp = require('bin-packer')
+    , oversized
+  
+  if (this._addOversize) {
+    return bp.firstFitDecreasing(files, 'size', max, true)
+  } else {
+    blocks = bp.firstFitDecreasing(files, 'size', max, false)
+    oversized = blocks.pop()
+    this.emit('error', new Error('Oversized: ' + JSON.stringify(oversized)))
+    return blocks
   }
 }
 
