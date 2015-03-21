@@ -22,7 +22,7 @@ function statOver(dir, onFile, onDir, elseErr, callback) {
   })
   
   function runStat(filePath) {
-    fs.stat(dir, function (err, stats) {
+    fs.stat(filePath, function (err, stats) {
       if (err) {
         elseErr(err, checkDone)
       } else if (stats.isFile()) {

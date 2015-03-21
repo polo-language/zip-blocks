@@ -104,7 +104,6 @@ function zipFilesInDir() {
         var thisFile = files[filePath] = {}
         thisFile.isDir = true
         du(filePath, function (err, size) {
-DEBUG:          console.log('test: ' +filePath)
           if (err) {
             that.emit('error', err)
           } else {
