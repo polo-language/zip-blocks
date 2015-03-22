@@ -31,6 +31,7 @@ inherits(ZipBlocks, EventEmitter)
 ZipBlocks.prototype.setCompressionRatio = setCompressionRatio
 ZipBlocks.prototype.setOptions = setOptions
 ZipBlocks.prototype.zipFilesInDir = zipFilesInDir
+ZipBlocks.prototype.zipIndividually = zipIndividually
 
 function  syncErrorListener(event, listener) {
   if (event === 'error') {
@@ -72,6 +73,32 @@ function parseOptions(options) {
       break
     }
   }
+}
+
+
+function handleArgs(args, callback) {
+  var inPath = args[0]
+    , outPath = args[1]
+    , that = this
+
+  if (typeof args[1] === 'string') {
+    if (typeof args[2] === 'object') {
+      parseOptions.call(this, args[2])
+    }
+  } else {
+    outPath = '' // use empty str if undefined so fs.exists doesn't throw
+
+    if (typeof args[1] === 'object') {
+      parseOptions.call(this, args[1])
+    }
+  }
+
+  this._name = this._name || inPath
+
+  fs.exists(outPath, function (existsOut) {
+    if (!existsOut) outPath = inPath
+    callback.call(that, inPath, outPath)
+  })
 }
 
 function zipFilesInDir() {
@@ -122,92 +149,45 @@ function zipFilesInDir() {
   }
 }
 
-function handleArgs(args, callback) {
-  var inPath = args[0]
-    , outPath = args[1]
-    , that = this
+function zipIndividually() {
+  var that = this
+    , filesArray = []
 
-  if (typeof args[1] === 'string') {
-    if (typeof args[2] === 'object') {
-      parseOptions.call(this, args[2])
+  if (arguments.length < 1 || 3 < arguments.length) {
+    this.emit('error', new Error('Usage: zipIndividually(inputDir, [outputDir], [options]).'))
+    return
+  }
+  handleArgs.call(this, arguments, listAndZip)
+
+  function listAndZip(inPath, outPath) {
+    statOver(inPath, onFile, onDir, elseErr, blockAndZip)
+
+    function elseErr(err, callback) {
+      that.emit('error', err)
+      callback()
     }
-  } else {
-    outPath = '' // use empty str if undefined so fs.exists doesn't throw
 
-    if (typeof args[1] === 'object') {
-      parseOptions.call(this, args[1])
+    function onFile(filePath, stats, callback) {
+      var newFile = {}
+      newFile[filePath] = { isDir: false }
+      filesArray.push(newFile)
+      callback()
+    }
+
+    function onDir(filePath, stat, callback) {
+      if (!that._filesOnly) {
+        var newDir = {}
+        newDir[filePath] = { isDir: true }
+        filesArray.push(newDir)
+      }
+      callback()
+    }
+
+    function blockAndZip() {
+      doZip.call(that, filesArray, outPath)
     }
   }
-
-  this._name = this._name || inPath
-
-  fs.exists(outPath, function (existsOut) {
-    if (!existsOut) outPath = inPath
-    callback.call(that, inPath, outPath)
-  })
 }
-
-/*function getListingAndZip(inPath, outPath) {
-  var thisZB = this
-    , filesReady = 0
-
-  fs.readdir(inPath, function (err, listing) {
-    var files = {}
-
-    if (err) {
-      thisZB.emit('error', err)
-      return
-    }
-    for (var item in listing) {
-      runStat(path.join(inPath, listing[item]))
-    }
-
-    function runStat(filePath) {
-      fs.stat(filePath, function (err, stats) {
-        var thisFile
-        
-        if (err) {
-          thisZB.emit('error', err)
-          checkAllStatsCollected()
-          return
-        }
-
-        if (stats.isDirectory()) {
-          if (!thisZB._filesOnly) {
-            thisFile = files[filePath] = {}
-            thisFile.isDir = true
-            setDirSize(filePath, thisFile)
-          } else {
-            checkAllStatsCollected()
-          }
-        } else if (stats.isFile()) {
-          thisFile = files[filePath] = {}
-          thisFile.isDir = false
-          thisFile.size = stats.size
-          checkAllStatsCollected()
-        }
-      })
-
-      function setDirSize(dir, objWithSizeField) {
-        du(dir, function (err, size) {
-          if (err) {
-            thisZB.emit('error', err)
-          } else {
-            objWithSizeField.size = size
-          }
-          checkAllStatsCollected()
-        })
-      }
-
-      function checkAllStatsCollected() {
-        ++filesReady
-        if (filesReady === listing.length) {
-          doZip.call(thisZB, getBlocks.call(thisZB, files), outPath)
-        }
-      }
-    }
-  })
-}*/
 
 function getBlocks(files) {
   var blocks
