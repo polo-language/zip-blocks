@@ -1,4 +1,4 @@
-# zip-blocks v0.3.1
+# zip-blocks v0.3.2
 
 Interface to zip files in blocks of predetermined maximum size
 
@@ -14,6 +14,10 @@ npm install zip-blocks --save
 #### zipFilesInDir(inputDir, [outputDir], [options])
 
 Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. 
+
+#### zipIndividually(inputDir, [outputDir], [options])
+
+Adds each file in `inputDir` to its own zip archive. 
 
 #### setOptions(options)
 
@@ -37,7 +41,7 @@ Sets the assumed compression ratio to the provided value (from 0.01 to 1, inclus
 
 ### Events
 
-Extends events.EventEmitter. Set an error callback with `on(event, callback)`. Note that multiple errors may fire during processesing. The default error handler prints a stack trace and continues.
+Extends events.EventEmitter. Set an error callback with `on(event, callback)`. Note that multiple errors may fire during processesing. The default error handler prints the error message and continues.
 
 
 ## Example

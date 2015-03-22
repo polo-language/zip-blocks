@@ -1,6 +1,6 @@
 {
   "name": "zip-blocks",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Interface to zip files and directories in blocks of predetermined size",
   "homepage": "https://github.com/polo-language/zip-blocks",
   "author": {
@@ -15,7 +15,7 @@
     "type": "MIT",
     "url": "https://github.com/polo-language/zip-blocks/blob/master/LICENSE"
   },
-  "main": "zip-blocks",
+  "main": "lib/zip-blocks",
   "keywords": [
     "zip",
     "archive",
