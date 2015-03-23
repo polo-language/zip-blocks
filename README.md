@@ -11,13 +11,13 @@ npm install zip-blocks --save
 
 ### Methods
 
-#### zipFilesInDir(inputDir, [outputDir], [options])
+#### zipFilesInDir(inputDir, [outputDir], [options], [name])
 
-Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. 
+Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives.
 
-#### zipIndividually(inputDir, [outputDir], [options])
+#### zipIndividually(inputDir, [outputDir], [options], [name])
 
-Adds each file in `inputDir` to its own zip archive. 
+Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip" is appended to the original filenames. `filesOnly` is the only applicable key in `options`.
 
 #### setOptions(options)
 
@@ -27,12 +27,11 @@ Adds each file in `inputDir` to its own zip archive.
   blockSize: 20, // in MB
   compressionRatio: 1,
   filesOnly: true,
-  addOversize: true,
-  name: undefined
+  addOversize: true
 }
 ```
 
-If `filesOnly` is set to false, directories are included in the operation as well. If `addOversize` is left at `true`, individual files/directories exceeding the maximum block size will be added to individual archives; for `false`, they will be skipped and an error event emitted listing oversized items. `name` is used as the base name for generated files (defaults are set by individual methods as necessary).
+If `filesOnly` is set to false, directories are included in the operation as well. If `addOversize` is left at `true`, individual files/directories exceeding the maximum block size will be added to individual archives; for `false`, they will be skipped and an error event emitted listing oversized items.
 
 #### setCompressionRatio(ratio)
 
@@ -41,20 +40,21 @@ Sets the assumed compression ratio to the provided value (from 0.01 to 1, inclus
 
 ### Events
 
-Extends events.EventEmitter. Set an error callback with `on(event, callback)`. Note that multiple errors may fire during processesing. The default error handler prints the error message and continues.
+Extends events.EventEmitter. Set an error callback with `on(event, callback)`. The default error handler prints the error message and continues.
 
 
 ## Example
 
 ```js
 var ZipBlocks = require('zip-blocks')
-  , zipB = new ZipBlocks()
-  , options = {
-      blockSize: 2,     // in MB
-      filesOnly: false  // include directories
-    };
+  , zip = new ZipBlocks()
+  , options = { blockSize: 2      // in MB
+              , filesOnly: false  // include directories
+              }
 
-zipB.on('error', function (err) { /* handdle error */ });
+zip.on('error', function (err) { /* handdle error */ })
 
-zipB.zipFilesInDir('files/in', 'files/out', options);
+zip.zipFilesInDir('files/in', 'files/out', options, 'output_name')
+
+zip.zipIndividually('files/in', 'files/out')
 ```
