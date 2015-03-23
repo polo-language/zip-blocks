@@ -19,7 +19,6 @@ function ZipBlocks() {
   this._compressionRatio = 1       // for files with high compression ratio
   this._filesOnly = true
   this._addOversize = true
-  //this._name = undefined
 
   this._onError = function (err) {
     console.error(err) // defualt error handling
@@ -68,9 +67,6 @@ function parseOptions(options) {
     case 'addOversize':
       this._addOversize = options[key]
       break
-    /*case 'name':
-      this._name = options[key]
-      break*/
     }
   }
 }
@@ -80,7 +76,6 @@ function handleArgs(args, callback) {
   var that = this
     , inPath = args[0]
     , outPath = args[1]
-    , nameArg
     , name
 
   if (!inPath) {
@@ -107,8 +102,6 @@ function handleArgs(args, callback) {
     }
   }
 
-  name = name || inPath
-  
   fs.exists(outPath, function (existsOut) {
     if (!existsOut) outPath = inPath
     callback.call(that, inPath, outPath, name)
@@ -122,6 +115,7 @@ function zipFilesInDir() {
   handleArgs.call(this, arguments, listAndZip)
 
   function listAndZip(inPath, outPath, name) {
+    name = name || inPath
     statOver(inPath, onFile, onDir, elseErr, blockAndZip)
 
     function elseErr(err, callback) {
@@ -130,16 +124,15 @@ function zipFilesInDir() {
     }
 
     function onFile(filePath, stats, callback) {
-      files[filePath] = {}
-      files[filePath].isDir = false
-      files[filePath].size = stats.size
+      files[filePath] = { isDir: false
+                        , size: stats.size
+                        }
       callback()
     }
 
     function onDir(filePath, stat, callback) {
       if (!that._filesOnly) {
-        var thisFile = files[filePath] = {}
-        thisFile.isDir = true
+        var thisFile = files[filePath] = { isDir: true }
         du(filePath, function (err, size) {
           if (err) {
             that.emit('error', err)
@@ -161,7 +154,7 @@ function zipFilesInDir() {
 
 function zipIndividually() {
   var that = this
-    , filesArray = []
+    , files = {}
 
   handleArgs.call(this, arguments, listAndZip)
 
@@ -177,23 +170,19 @@ function zipIndividually() {
     }
 
     function onFile(filePath, stats, callback) {
-      var newFile = {}
-      newFile[filePath] = { isDir: false }
-      filesArray.push(newFile)
+      files[filePath] = { isDir: false }
       callback()
     }
 
     function onDir(filePath, stat, callback) {
       if (!that._filesOnly) {
-        var newDir = {}
-        newDir[filePath] = { isDir: true }
-        filesArray.push(newDir)
+        files[filePath] = { isDir: true }
       }
       callback()
     }
 
     function blockAndZip() {
-      doZip.call(that, filesArray, outPath, name)
+      doZipKeys.call(that, files, outPath, name)
     }
   }
 }
@@ -236,6 +225,34 @@ function doZip(blocks, outPath, name) {
       } else {
         zip.append(fs.createReadStream(key), { name: path.basename(key) })
       }
+    }
+    zip.finalize()
+  }
+}
+
+function doZipKeys(toZip, outPath, name) {
+  var archiver = require('archiver')
+    , zip
+    , zipFileName
+    , outFile
+    , zipNum = 0
+
+  for (var key in toZip) {
+    if (name) {
+      zipFileName = path.join(outPath,
+                              path.basename(name) + '_' + zipNum + '.zip')
+      ++zipNum
+    } else {
+      zipFileName = path.join(outPath, path.basename(key) + '.zip')
+    }
+    outFile = fs.createWriteStream(zipFileName)
+    zip = archiver('zip')
+    zip.on('error', this.emit.bind(this, 'error'))
+    zip.pipe(outFile)
+    if (toZip[key].isDir) {
+      zip.directory(key, path.basename(key))
+    } else {
+      zip.append(fs.createReadStream(key), { name: path.basename(key) })
     }
     zip.finalize()
   }
