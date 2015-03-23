@@ -24,8 +24,8 @@ Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip
 `options` is an object containing keys from among the following (default values are given):
 ```js
 {
-  blockSize: 20, // in MB
-  compressionRatio: 1,
+  blockSize: 20,        // in MB
+  compressionRatio: 1,  // no compression
   filesOnly: true,
   addOversize: true
 }
