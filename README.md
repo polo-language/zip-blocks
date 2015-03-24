@@ -1,4 +1,4 @@
-# zip-blocks v0.3.2
+# zip-blocks v0.4.0
 
 Interface to zip files in blocks of predetermined maximum size
 
@@ -11,13 +11,13 @@ npm install zip-blocks --save
 
 ### Methods
 
-#### zipFilesInDir(inputDir, [outputDir], [options], [name])
+#### zipFilesInDir(inputDir, [outputDir], [options], [name], [callback])
 
-Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives.
+Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives. `callback` does not receive any arguments.
 
-#### zipIndividually(inputDir, [outputDir], [options], [name])
+#### zipIndividually(inputDir, [outputDir], [options], [name], [callback])
 
-Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip" is appended to the original filenames. `filesOnly` is the only applicable key in `options`.
+Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip" is appended to the original filenames. `filesOnly` is the only applicable key in `options`. `callback` does not receive any arguments.
 
 #### setOptions(options)
 
@@ -31,11 +31,13 @@ Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip
 }
 ```
 
-If `filesOnly` is set to false, directories are included in the operation as well. If `addOversize` is left at `true`, individual files/directories exceeding the maximum block size will be added to individual archives; for `false`, they will be skipped and an error event emitted listing oversized items.
+If `filesOnly` is set to false, directories are included in the operation as well. If `addOversize` is left at `true`, individual files/directories exceeding the maximum block size will be added to individual archives; for `false`, they will be skipped and an error event emitted listing oversized items. See `setCompressionRatio` method below for details on `compressionRatio`.
 
 #### setCompressionRatio(ratio)
 
-Sets the assumed compression ratio to the provided value (from 0.01 to 1, inclusive). The assumed compression ratio is used to determine the maximum number of files per block. The default is 1 (equivalent to no compression). Note that setting the compression ratio does not affect the actual zip compression performance.
+If the string `"exact"`is provided for `ratio`, the sizes of the compressed files will be calculated (by zipping them into a temporary folder). Note that this is only available for `filesOnly` set to `true`, and will approximately double the duration of the operation.
+
+Otherwise, `ratio` should be a value from 0.01 to 1, inclusive, and is provided as an estimate of the compressability of the files when determining the maximum number of files per block. The default is `1`, which is equivalent to no compression (e.g. for PNG, MP3, etc.). Note that setting the compression ratio to a numeric value will not affect the actual zip compression performance.
 
 
 ### Events
