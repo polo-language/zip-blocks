@@ -1,4 +1,4 @@
-# zip-blocks v0.4.0
+# zip-blocks v0.4.1
 
 Interface to zip files in blocks of predetermined maximum size
 
