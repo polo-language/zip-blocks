@@ -2,26 +2,21 @@
 
 Interface to zip files in blocks of predetermined maximum size
 
+
 ## Install
 
 ```bash
 npm install zip-blocks --save
 ```
+
+
 ## zip-blocks
 
-### Methods
+### Constructor
 
-#### zipFilesInDir(inputDir, [outputDir], [options], [name], [callback])
+Pass an object to the constructor to specify settings. See example below.
 
-Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` specified in `options`. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives. `callback` does not receive any arguments.
-
-#### zipIndividually(inputDir, [outputDir], [options], [name], [callback])
-
-Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip" is appended to the original filenames. `filesOnly` is the only applicable key in `options`. `callback` does not receive any arguments.
-
-#### setOptions(options)
-
-`options` is an object containing keys from among the following (default values are given):
+The settings object can contain keys from among the following (default values are given):
 ```js
 {
   blockSize: 20,        // in MB
@@ -31,14 +26,19 @@ Adds each file in `inputDir` to its own zip archive. If `name` is omitted, ".zip
 }
 ```
 
-If `filesOnly` is set to false, directories are included in the operation as well. If `addOversize` is left at `true`, individual files/directories exceeding the maximum block size will be added to individual archives; for `false`, they will be skipped and an error event emitted listing oversized items. See `setCompressionRatio` method below for details on `compressionRatio`.
+- `filesOnly`: If set to false, directories are included in the operation as well.
+- `addOversize`: If left at `true`, individual files/directories exceeding the maximum block size will be added to individual archives; for `false`, they will be skipped and an error event emitted listing oversized items. 
+- `compressionRatio`: If the string `'exact'` is provided for `ratio`, the sizes of the compressed files will be calculated (by zipping them into a temporary folder). Note that this is only available for `filesOnly` set to `true`, and will approximately double the duration of the operation. Otherwise, `ratio` should be a value from 0.01 to 1, inclusive, and is used to estimate the compressibility of the files when determining the maximum number of files per block. The default is `1`, which is equivalent to no compression (e.g. for PNG, MP3, etc.). Note that setting the compression ratio to a numeric value will not affect the actual zip compression performance.
 
-#### setCompressionRatio(ratio)
+### Methods
 
-If the string `"exact"`is provided for `ratio`, the sizes of the compressed files will be calculated (by zipping them into a temporary folder). Note that this is only available for `filesOnly` set to `true`, and will approximately double the duration of the operation.
+#### zipFilesInDir(inputDir, [outputDir], [name], [callback])
 
-Otherwise, `ratio` should be a value from 0.01 to 1, inclusive, and is provided as an estimate of the compressability of the files when determining the maximum number of files per block. The default is `1`, which is equivalent to no compression (e.g. for PNG, MP3, etc.). Note that setting the compression ratio to a numeric value will not affect the actual zip compression performance.
+Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` setting. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives. `callback` does not receive any arguments.
 
+#### zipIndividually(inputDir, [outputDir], [name], [callback])
+
+Adds each file in `inputDir` to its own zip archive. If no `outputDir` is provided, zip files are written to `inputDir`. If `name` is omitted, the original filenames are used for the archives. `filesOnly` is the only applicable key in `options`. `callback` does not receive any arguments.
 
 ### Events
 
