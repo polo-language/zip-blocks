@@ -49,14 +49,14 @@ Extends events.EventEmitter. Set an error callback with `on(event, callback)`. T
 
 ```js
 var ZipBlocks = require('zip-blocks')
-  , zip = new ZipBlocks()
   , options = { blockSize: 2      // in MB
               , filesOnly: false  // include directories
               }
+  , zip = new ZipBlocks(options)
 
 zip.on('error', function (err) { /* handdle error */ })
 
-zip.zipFilesInDir('files/in', 'files/out', options, 'output_name')
+zip.zipFilesInDir('files/in', 'files/out', 'output_name')
 
 zip.zipIndividually('files/in', 'files/out')
 ```
