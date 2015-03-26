@@ -28,7 +28,7 @@
   ],
   "dependencies": {
     "archiver": "^0.14.3",
-    "bin-packer": "^0.1.0",
+    "bin-packer": "^0.1.4",
     "du": "^0.1.0"
   },
   "devDependencies": {
