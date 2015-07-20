@@ -1,4 +1,4 @@
-# zip-blocks v0.4.2
+# zip-blocks v0.4.3
 
 Interface to zip files in blocks of predetermined maximum size
 
@@ -34,7 +34,7 @@ The settings object can contain keys from among the following (default values ar
 
 #### zipFilesInDir(inputDir, [outputDir], [name], [callback])
 
-Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` setting. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives. `callback` does not receive any arguments.
+Adds all files at the root of `inputDir` to a set of zip archives. Each of the archives produced is smaller than or equal to the `blockSize` setting. (The original motivation was to zip a set of files into archives that can be individually sent as email attachments.) If no `outputDir` is provided, zip files are written to `inputDir`. `name` is used as the base name for the generated archives; defaults to the name of the input directory. `callback` does not receive any arguments.
 
 #### zipIndividually(inputDir, [outputDir], [name], [callback])
 
@@ -42,7 +42,7 @@ Adds each file in `inputDir` to its own zip archive. If no `outputDir` is provid
 
 ### Events
 
-Extends events.EventEmitter. Set an error callback with `on(event, callback)`. The default error handler prints the error message and continues.
+Extends events.EventEmitter. Set an error callback with `on('error', callback)`. The default error handler prints the error message and continues.
 
 
 ## Example
@@ -53,10 +53,11 @@ var ZipBlocks = require('zip-blocks')
               , filesOnly: false  // include directories
               }
   , zip = new ZipBlocks(options)
+  , callback = function () { console.log('All done!') }
 
 zip.on('error', function (err) { /* handdle error */ })
 
-zip.zipFilesInDir('files/in', 'files/out', 'output_name')
+zip.zipFilesInDir('files/in', 'files/out', 'output_name', callback)
 
-zip.zipIndividually('files/in', 'files/out')
+zip.zipIndividually('files/in', 'files/out', callback)
 ```
