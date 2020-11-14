@@ -1,4 +1,4 @@
-# zip-blocks v0.4.3
+# zip-blocks v0.5.0
 
 Interface to zip files in blocks of predetermined maximum size
 
@@ -6,7 +6,7 @@ Interface to zip files in blocks of predetermined maximum size
 ## Install
 
 ```bash
-npm install zip-blocks --save
+npm install zip-blocks
 ```
 
 
@@ -48,12 +48,13 @@ Extends events.EventEmitter. Set an error callback with `on('error', callback)`.
 ## Example
 
 ```js
-var ZipBlocks = require('zip-blocks')
-  , options = { blockSize: 2      // in MB
-              , filesOnly: false  // include directories
-              }
-  , zip = new ZipBlocks(options)
-  , callback = function () { console.log('All done!') }
+const ZipBlocks = require('zip-blocks')
+const options = {
+    blockSize: 2,      // in MB
+    filesOnly: false,  // include directories
+}
+const zip = new ZipBlocks(options)
+const callback = function () { console.log('All done!') }
 
 zip.on('error', function (err) { /* handdle error */ })
 

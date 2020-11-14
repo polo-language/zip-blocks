@@ -1,4 +1,3 @@
 node_modules/
-test/test_files/
-test/test.js
+test/
 packed/
